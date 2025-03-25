@@ -10,3 +10,26 @@ CNRS (Container Number Recognition System). This powerful yet lightweight tool i
 ✅ Customizable & Insightful: Includes features like Recognition Region Selection and detailed reporting for deeper insights.
 ✅ On-Premise & Lightweight: Runs locally, even on Single Board Computers, offering full control, enhanced security, and minimal resource usage.
 
+Install dependencies ;
+sudo apt install python3-dev python3.11-dev v4l-utils libcairo2-dev libxt-dev cmake gir1.2-gtk-3.0 libgtk2.0-dev pkg-config gdal-bin libgdal-dev libgirepository1.0-dev -y
+
+Create Python Virtual Env and Run main.py file in that Env.
+
+python3 -m venv ocrenv
+source ocrenv/bin/activate
+
+pip install pycoral tflite-runtime
+pip install pycoral
+pip install opencv-python-headless 
+pip install ultralytics 
+pip install mjpeg_streamer 
+pip install imutils
+pip install pytz
+pip install flask
+pip install PyGObject
+
+python3 main.py
+
+
+
+
