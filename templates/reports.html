@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Konteyner Numarası Okuma</title>
+    <style>
+        /* General Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: #333;
+            padding: 20px;
+            padding-bottom: 80px; /* Add space for the sticky footer */
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Top Controls (Search and Pagination) */
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            position: sticky; /* Make it sticky */
+            top: 0; /* Stick to the top of the viewport */
+            z-index: 100; /* Ensure it stays above other elements */
+        }
+
+        /* Search Container */
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-container input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 150px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-container input[type="text"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        .search-container button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .search-container button:hover {
+            background: #45a049;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .pagination button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #45a049;
+        }
+
+        .pagination span {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        /* Table Container */
+        .table-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 1rem;
+        }
+
+        th {
+            background: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+
+        td {
+            background: #f9f9f9;
+            text-align: center; /* Center text in the dominant color column */
+        }
+
+        tr:hover {
+            background: #f1f1f1;
+        }
+
+        img.cropped-image, img.still-shot {
+            max-width: 100px;
+            height: auto;
+            border-radius: 5px;
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        img.still-shot {
+            max-width: 50px;
+        }
+
+        img.cropped-image:hover, img.still-shot:hover {
+            transform: scale(1.1);
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        /* Sticky Footer */
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 1rem;
+            position: fixed; /* Make it sticky */
+            bottom: 0; /* Stick to the bottom of the viewport */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Adjust for centering */
+            width: 90%; /* Set width */
+            max-width: 1200px; /* Match container width */
+            z-index: 100; /* Ensure it stays above other elements */
+        }
+
+        /* Color Square */
+        .color-square {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 4px;
+            margin: 0 auto; /* Center the square */
+        }
+
+        /* Centering the color square within the td */
+        td.color-cell {
+            text-align: center;
+            vertical-align: middle; /* Ensure vertical alignment */
+        }
+
+        /* Media Queries for Mobile Responsiveness */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .search-container input[type="text"] {
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .pagination {
+                justify-content: center;
+            }
+
+            .pagination button {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            img.cropped-image {
+                max-width: 80px;
+            }
+
+            img.still-shot {
+                max-width: 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Search and Pagination at the Top -->
+        <div class="top-controls">
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Konteyner No Ara...">
+                <button id="search-btn">Ara</button>
+            </div>
+            <div class="pagination">
+                <button id="prev-page">Önceki</button>
+                <span id="page-info">Sayfa 1</span>
+                <button id="next-page">Sonraki</button>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="table-container">
+            <h2>Tüm Okumalar</h2>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Konteyner No</th>
+                        <th>Kırpılmış Foto</th>
+                        <th>Tam Foto</th>
+                        <th>Renk</th>
+                        <th>Tarih</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <img id="lightbox-img" src="" alt="Lightbox Image">
+    </div>
+
+    <!-- Copyright Footer -->
+    <footer>
+        © 2025 Tüm hakları saklıdır.
+    </footer>
+
+    <script>
+        const RESULTS_PER_PAGE = 30; // Number of items per page
+        let currentPage = 1; // Current page number
+        let totalPages = 1; // Total number of pages
+        let allData = []; // Stores all data fetched from results.json
+        let filteredData = []; // Stores filtered data based on search
+        let currentSearch = ''; // Stores the current search term
+        let updateInterval; // Stores the interval ID for auto-updates
+
+        // Function to populate the table with data
+        function populateTable(data) {
+            const tbody = document.querySelector('#results-table tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            // Calculate total pages
+            totalPages = Math.ceil(data.length / RESULTS_PER_PAGE);
+
+            // Get data for the current page
+            const startIndex = (currentPage - 1) * RESULTS_PER_PAGE;
+            const endIndex = startIndex + RESULTS_PER_PAGE;
+            const paginatedData = data.slice(startIndex, endIndex);
+
+            // Populate the table with paginated data
+            paginatedData.forEach(result => {
+                const row = document.createElement('tr');
+                const croppedImage = `<img src="/cropped_images/${result.cropped_image_path}" class="cropped-image" alt="Cropped Image">`;
+                const stillShot = `<img src="/still_shots/${result.still_shot_path}" class="still-shot" alt="Still Shot" data-fullsize="/still_shots/${result.still_shot_path}">`;
+
+                // Validate and format dominant_color
+                // Get the dominant color from the result
+                const dominantColorRGB = result.dominant_color || [0, 0, 0]; // Default to black if not available
+                const dominantColor = `rgb(${dominantColorRGB[2]}, ${dominantColorRGB[1]}, ${dominantColorRGB[0]})`;
+
+
+                row.innerHTML = `
+                    <td>${result.container_number || 'N/A'}</td>
+                    <td>${croppedImage}</td>
+                    <td>${stillShot}</td>
+                    <td class="color-cell">
+                        <div class="color-square" style="background-color: ${dominantColor};"></div>
+                    </td>
+                    <td>${result.datetime || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update pagination controls
+            const pageInfo = document.getElementById('page-info');
+            pageInfo.textContent = `Sayfa ${currentPage} / ${totalPages}`;
+
+            const prevButton = document.getElementById('prev-page');
+            const nextButton = document.getElementById('next-page');
+            prevButton.disabled = currentPage === 1; // Disable "Previous" button on the first page
+            nextButton.disabled = currentPage === totalPages; // Disable "Next" button on the last page
+
+            // Add click event listeners to still shot images for lightbox functionality
+            const stillShots = document.querySelectorAll('.still-shot');
+            stillShots.forEach(img => {
+                img.addEventListener('click', () => {
+                    const lightbox = document.getElementById('lightbox');
+                    const lightboxImg = document.getElementById('lightbox-img');
+                    lightboxImg.src = img.dataset.fullsize;
+                    lightbox.classList.add('active');
+                });
+            });
+        }
+
+        // Function to fetch data from results.json and update the table
+        function updateTable() {
+            fetch('/results.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!Array.isArray(data)) {
+                        console.error('Data is not an array:', data);
+                        return;
+                    }
+                    allData = data.slice().reverse(); // Reverse data to show newest first
+                    if (currentSearch) {
+                        // Filter data based on search term
+                        filteredData = allData.filter(result =>
+                            result.container_number?.toLowerCase().includes(currentSearch)
+                        );
+                    } else {
+                        filteredData = allData;
+                    }
+                    populateTable(filteredData); // Populate table with filtered data
+                })
+                .catch(error => console.error('Error fetching results:', error));
+        }
+
+        // Function to start auto-updates
+        function startUpdates() {
+            if (!updateInterval) {
+                updateInterval = setInterval(updateTable, 2000); // Update every 2 seconds
+            }
+        }
+
+        // Function to stop auto-updates
+        function stopUpdates() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+        }
+
+        // Function to handle search
+        function searchContainer() {
+            currentSearch = document.getElementById('search-input').value.toLowerCase().trim();
+            currentPage = 1; // Reset to the first page when searching
+
+            if (currentSearch === '') {
+                filteredData = allData; // Show all data if search is cleared
+                startUpdates(); // Restart auto-updates
+            } else {
+                filteredData = allData.filter(result =>
+                    result.container_number?.toLowerCase().includes(currentSearch)
+                );
+                stopUpdates(); // Stop auto-updates while searching
+            }
+            populateTable(filteredData); // Populate table with search results
+        }
+
+        // Event listeners for pagination buttons
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                populateTable(filteredData);
+            }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                populateTable(filteredData);
+            }
+        });
+
+        // Event listener for search button
+        document.getElementById('search-btn').addEventListener('click', searchContainer);
+
+        // Event listener for Enter key in search input
+        document.getElementById('search-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchContainer();
+            }
+        });
+
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.classList.remove('active');
+            }
+        });
+
+        // Start auto-updates and populate table on page load
+        startUpdates();
+        updateTable();
+    </script>
+</body>
+</html>

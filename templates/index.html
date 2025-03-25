@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konteyner Numarası Okuma</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        h2 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Video Container */
+        .video-container {
+            text-align: center;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .video-container img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: transform 0.3s ease-in-out;
+        }
+        /*.video-container img:hover {
+            transform: scale(1.05);
+        }*/
+
+        /* Table Container */
+        .table-container {
+            overflow-x: auto;
+            overflow-y: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-height: 750px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        td {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        img.cropped-image {
+            max-width: 100px;
+            height: auto;
+            border-radius: 4px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        img.still-shot {
+            max-width: 50px;
+            height: auto;
+            border-radius: 4px;
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        img.cropped-image:hover, img.still-shot:hover {
+            transform: scale(1.1);
+        }
+
+        /* Lightbox Styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .lightbox.active {
+            display: flex;
+        }
+
+        /* Color Square */
+        .color-square {
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            border-radius: 4px;
+        }
+
+        /* Centering the color square within the td */
+        td.color-cell {
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+            .video-container {
+                flex: 2;
+            }
+            .table-container {
+                flex: 1;
+            }
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Live Stream -->
+        <div class="video-container">
+            <h2>Canlı Yayın</h2>
+            <img src="http://172.16.58.49:8080/detection" alt="Live Stream">
+        </div>
+
+        <!-- Results Table -->
+        <div class="table-container">
+            <h2>Son Okumalar</h2>
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Konteyner No</th>
+                        <th>Kırpılmış Foto</th>
+                        <th>Tam Foto</th>
+                        <th>Renk</th>
+                        <th>Tarih</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <img id="lightbox-img" src="" alt="Lightbox Image">
+    </div>
+
+    <footer>
+        © 2025 Tüm hakları saklıdır.
+    </footer>
+
+    <script>
+        // Function to fetch and update the results table with the last 20 results
+        function updateTable() {
+            fetch('/results.json') // Fetch from the Flask route serving results.json
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received from results.json:', data);
+
+                    const tbody = document.querySelector('#results-table tbody');
+                    tbody.innerHTML = ''; // Clear existing rows
+
+                    if (!Array.isArray(data)) {
+                        console.error('Data is not an array:', data);
+                        return;
+                    }
+
+                    // Reverse data to show newest results first and get the last 10 results
+                    const last10Results = data.slice(-10).reverse();
+
+                    last10Results.forEach(result => {
+                        console.log('Processing result:', result);
+
+                        const row = document.createElement('tr');
+                        const croppedImage = `<img src="/cropped_images/${result.cropped_image_path}" class="cropped-image" alt="Cropped Image">`;
+                        const stillShot = `<img src="/still_shots/${result.still_shot_path}" class="still-shot" alt="Still Shot" data-fullsize="/still_shots/${result.still_shot_path}">`;
+
+                        // Get the dominant color from the result
+                        const dominantColor = result.dominant_color || [0, 0, 0]; // Default to black if not available
+                        const dominantColorRGB = `rgb(${dominantColor[2]}, ${dominantColor[1]}, ${dominantColor[0]})`;
+
+                        row.innerHTML = `
+                            <td style="font-weight: bold;">${result.container_number || 'N/A'}</td>
+                            <td>${croppedImage}</td>
+                            <td>${stillShot}</td>
+                            <td class="color-cell"><div class="color-square" style="background-color: ${dominantColorRGB};"></div></td>
+                            <td>${result.datetime || 'N/A'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+
+                    // Add click event listeners to still shot images
+                    const stillShots = document.querySelectorAll('.still-shot');
+                    stillShots.forEach(img => {
+                        img.addEventListener('click', () => {
+                            const lightbox = document.getElementById('lightbox');
+                            const lightboxImg = document.getElementById('lightbox-img');
+                            lightboxImg.src = img.dataset.fullsize;
+                            lightbox.classList.add('active');
+                        });
+                    });
+                })
+                .catch(error => console.error('Error fetching results:', error));
+        }
+
+        // Close lightbox when clicking outside the image
+        const lightbox = document.getElementById('lightbox');
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.classList.remove('active');
+            }
+        });
+
+        // Update the table every 2 seconds
+        setInterval(updateTable, 2000);
+
+        // Initial call to populate the table on page load
+        updateTable();
+    </script>
+</body>
+</html>

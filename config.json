@@ -1,0 +1,39 @@
+{
+    "model_settings": {
+        "detection_model_path": "detection.pt",
+        "recognition_model_path": "recognition.pt"
+    },
+    "frame_processing": {
+        "rotation_degree": 0,
+        "frame_width": 1280,
+        "frame_height": 720,
+        "frame_skip": 1,
+        "target_frame_width": 1280,
+        "target_frame_height": 720
+    },
+    "streaming": {
+        "rtsp": "rtsp://root:root@172.16.38.23:554/axis-media/media.amp" ,
+        "quality": 90,
+        "fps": 30
+    },
+    "file_system": {
+        "cropped_images_dir": "cropped_images",
+        "still_shots_dir": "still_shots"
+    },
+    "roi_settings": {
+        "use_roi": true,
+        "roi_x1": 200,   "roi_y1": 150,
+        "roi_x2": 615,  "roi_y2": 250,
+        "roi_x3": 615,  "roi_y3": 385,
+        "roi_x4": 200,   "roi_y4": 460
+    },
+    "detection_settings": {
+        "iou_threshold": 0.3,
+        "min_pixel_shift": 10
+    },
+    "motion_detection": {
+        "motion_threshold": 5000,
+        "motion_downsample_factor": 4,
+        "motion_skip_frames": 2
+    }
+}
