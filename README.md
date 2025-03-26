@@ -34,6 +34,8 @@ pip install pytz
 pip install flask
 pip install PyGObject
 
+Change RTSP IP and Credentials from config.json file.
+
 python3 main.py
 
 
